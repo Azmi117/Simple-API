@@ -8,6 +8,11 @@ import (
 	"github.com/Azmi117/Simple-API/internal/repository"
 )
 
+var (
+	ErrProductNotFound = errors.New("produknya ga ada, Mi!")
+	ErrInvalidInput    = errors.New("input lu ada yang salah nih")
+)
+
 type ProductUseCase struct {
 	repo *repository.ProductRepository
 }
@@ -39,4 +44,37 @@ func (u *ProductUseCase) Create(p models.Product) (models.Product, error) {
 	p.ID = len(u.repo.FindAll()) + 1
 
 	return u.repo.Create(p), nil
+}
+
+func (u *ProductUseCase) Update(id int, input models.Product) (models.Product, error) {
+	existing, found := u.repo.FindByID(id)
+	if !found {
+		return models.Product{}, ErrProductNotFound
+	}
+
+	// PATCH logic: cuma ganti kalau ada isinya
+	if input.Name != "" {
+		existing.Name = input.Name
+	} else {
+		return models.Product{}, ErrInvalidInput
+	}
+
+	if input.Price > 0 {
+		existing.Price = input.Price
+	} else {
+		return models.Product{}, ErrInvalidInput
+	}
+
+	existing.UpdatedAt = time.Now()
+	u.repo.Update(existing)
+	return existing, nil
+}
+
+// Tambahan: Logic Delete
+func (u *ProductUseCase) Delete(id int) error {
+	success := u.repo.Delete(id)
+	if !success {
+		return errors.New("gagal hapus, ID ga ketemu")
+	}
+	return nil
 }

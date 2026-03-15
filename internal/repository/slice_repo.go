@@ -1,6 +1,10 @@
 package repository
 
-import "github.com/Azmi117/Simple-API/internal/models"
+import (
+	"time"
+
+	"github.com/Azmi117/Simple-API/internal/models"
+)
 
 type MemDb struct {
 	Product []models.Product
@@ -38,4 +42,35 @@ func (r *ProductRepository) FindAll() []models.Product {
 func (r *ProductRepository) Create(p models.Product) models.Product {
 	r.db.Product = append(r.db.Product, p)
 	return p
+}
+
+func (r *ProductRepository) FindByID(id int) (models.Product, bool) {
+	for _, p := range r.db.Product {
+		if p.ID == id && p.DeletedAt == nil {
+			return p, true
+		}
+	}
+	return models.Product{}, false
+}
+
+// Tambahan: Update data di dalam slice
+func (r *ProductRepository) Update(p models.Product) {
+	for i, v := range r.db.Product {
+		if v.ID == p.ID {
+			r.db.Product[i] = p
+			break
+		}
+	}
+}
+
+// Tambahan: Soft Delete (Cuma kasih cap waktu)
+func (r *ProductRepository) Delete(id int) bool {
+	for i, p := range r.db.Product {
+		if p.ID == id && p.DeletedAt == nil {
+			now := time.Now()
+			r.db.Product[i].DeletedAt = &now
+			return true
+		}
+	}
+	return false
 }
